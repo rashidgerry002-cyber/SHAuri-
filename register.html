@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SHAuri — SHA Registration Wizard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--g1:#0a5c36;--g2:#0d7a48;--g3:#11a05f;--gold:#f0b429;--ink:#080f0c;--ink2:#111c16;--card:#141f18;--border:rgba(255,255,255,.07);--text:#e8f0eb;--muted:#7a9e87;--red:#e05252;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Instrument Sans',sans-serif;background:var(--ink);color:var(--text);min-height:100vh;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 50% at 10% 20%,rgba(10,92,54,.35) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 90% 80%,rgba(17,160,95,.15) 0%,transparent 55%),radial-gradient(ellipse 30% 30% at 50% 10%,rgba(240,180,41,.06) 0%,transparent 50%);pointer-events:none;}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(8,15,12,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+    .nav-logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-1px;text-decoration:none;}
+    .nav-logo span{color:var(--gold);}
+    .nav-links{display:flex;gap:2rem;list-style:none;}
+    .nav-links a{text-decoration:none;font-size:.85rem;font-weight:500;color:var(--muted);transition:color .2s;}
+    .nav-links a:hover{color:#fff;}
+    .nav-cta{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;border-radius:50px;padding:.55rem 1.4rem;font-size:.85rem;font-weight:600;cursor:pointer;text-decoration:none;box-shadow:0 0 20px rgba(10,92,54,.4);}
+    .page-hero{position:relative;z-index:1;padding:8rem 2.5rem 4rem;text-align:center;}
+    .hero-pill{display:inline-flex;align-items:center;gap:.6rem;background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.25);border-radius:50px;padding:.4rem 1.1rem;font-size:.78rem;font-weight:600;color:var(--gold);margin-bottom:1.5rem;animation:fadeDown .5s ease both;}
+    .hero-pill .live-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;}
+    .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.4rem,5vw,4rem);font-weight:800;line-height:1.05;letter-spacing:-2px;color:#fff;animation:fadeDown .5s .1s ease both;}
+    .page-hero h1 .accent{color:var(--g3);}
+    .page-hero p{margin-top:1rem;font-size:1rem;color:var(--muted);max-width:480px;margin-inline:auto;line-height:1.7;animation:fadeDown .5s .2s ease both;}
+    .step-track-wrapper{position:relative;z-index:1;max-width:680px;margin:0 auto 3rem;padding:0 2rem;animation:fadeDown .5s .3s ease both;}
+    .step-track{display:flex;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:20px;padding:1.5rem 2rem;}
+    .track-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;cursor:pointer;}
+    .track-step:not(:last-child)::after{content:'';position:absolute;top:20px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;}
+    .track-step.done:not(:last-child)::after,.track-step.active:not(:last-child)::after{background:var(--g2);}
+    .track-circle{width:40px;height:40px;border-radius:50%;z-index:1;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;border:2px solid rgba(255,255,255,.1);background:var(--card);color:var(--muted);transition:all .4s cubic-bezier(.34,1.56,.64,1);}
+    .track-step.active .track-circle{background:linear-gradient(135deg,var(--g1),var(--g3));border-color:var(--g3);color:#fff;box-shadow:0 0 24px rgba(17,160,95,.5);transform:scale(1.15);}
+    .track-step.done .track-circle{background:var(--g1);border-color:var(--g2);color:#fff;}
+    .track-label{font-size:.72rem;font-weight:600;margin-top:.5rem;color:var(--muted);text-align:center;white-space:nowrap;}
+    .track-step.active .track-label{color:var(--g3);}
+    .track-step.done .track-label{color:var(--text);}
+    .wizard-main{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 2rem 6rem;}
+    .step-panel{display:none;}
+    .step-panel.active{display:block;animation:panelIn .45s cubic-bezier(.22,1,.36,1) both;}
+    @keyframes panelIn{from{opacity:0;transform:translateY(20px) scale(.98);}to{opacity:1;transform:none;}}
+    .panel-card{background:var(--card);border:1px solid var(--border);border-radius:28px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.4);}
+    .panel-header{padding:2rem 2.5rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1.2rem;background:linear-gradient(135deg,rgba(10,92,54,.2),transparent);}
+    .panel-icon{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.6rem;background:linear-gradient(135deg,rgba(10,92,54,.4),rgba(17,160,95,.2));border:1px solid rgba(17,160,95,.2);box-shadow:0 0 30px rgba(10,92,54,.3);}
+    .panel-title-group{flex:1;}
+    .panel-step-tag{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:.3rem;}
+    .panel-title{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.5px;}
+    .panel-subtitle{font-size:.85rem;color:var(--muted);margin-top:.2rem;}
+    .panel-body{padding:2rem 2.5rem;}
+    .callout{display:flex;gap:.9rem;align-items:flex-start;padding:1rem 1.2rem;border-radius:14px;margin-bottom:1.5rem;font-size:.84rem;line-height:1.6;}
+    .callout-green{background:rgba(10,92,54,.25);border:1px solid rgba(17,160,95,.2);color:#a8e6c4;}
+    .callout-gold{background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.2);color:#f0c96a;}
+    .callout-red{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.2);color:#f0a0a0;}
+    .callout-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+    .section-block{margin-bottom:1.8rem;}
+    .section-block-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;}
+    .section-block-icon{width:36px;height:36px;border-radius:10px;background:rgba(17,160,95,.12);border:1px solid rgba(17,160,95,.15);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+    .section-block h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#fff;}
+    .section-block p{font-size:.84rem;color:var(--muted);line-height:1.6;}
+    .check-list{display:flex;flex-direction:column;gap:.7rem;}
+    .check-item{display:flex;align-items:flex-start;gap:.9rem;padding:.9rem 1.1rem;border-radius:14px;border:1.5px solid rgba(255,255,255,.06);cursor:pointer;transition:all .2s;background:rgba(255,255,255,.02);}
+    .check-item:hover{border-color:rgba(17,160,95,.3);background:rgba(17,160,95,.05);}
+    .check-item.checked{border-color:rgba(17,160,95,.4);background:rgba(10,92,54,.15);}
+    .chk-box{width:22px;height:22px;border-radius:7px;flex-shrink:0;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;transition:all .25s cubic-bezier(.34,1.56,.64,1);margin-top:2px;}
+    .check-item.checked .chk-box{background:linear-gradient(135deg,var(--g1),var(--g3));border-color:var(--g3);box-shadow:0 0 12px rgba(17,160,95,.4);}
+    .chk-inner{display:none;}
+    .check-item.checked .chk-inner{display:block;}
+    .chk-text h4{font-size:.9rem;font-weight:600;color:var(--text);}
+    .chk-text p{font-size:.8rem;color:var(--muted);margin-top:.2rem;line-height:1.5;}
+    .dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1.5rem;}
+    .dep-card{padding:1.1rem 1rem;border-radius:16px;border:1.5px solid rgba(255,255,255,.07);cursor:pointer;transition:all .2s;background:rgba(255,255,255,.02);text-align:center;}
+    .dep-card:hover{border-color:rgba(17,160,95,.35);background:rgba(17,160,95,.07);}
+    .dep-card.selected{border-color:var(--g3);background:rgba(10,92,54,.2);box-shadow:0 0 20px rgba(17,160,95,.15);}
+    .dep-card-icon{font-size:2rem;margin-bottom:.5rem;}
+    .dep-card h4{font-size:.85rem;font-weight:700;color:#fff;}
+    .dep-card p{font-size:.72rem;color:var(--muted);margin-top:.2rem;line-height:1.4;}
+    .dep-detail{display:none;}
+    .dep-detail.active{display:block;animation:panelIn .3s ease both;}
+    .bio-visual{display:flex;flex-direction:column;align-items:center;padding:2rem;margin-bottom:1.5rem;}
+    .fingerprint-wrap{position:relative;width:120px;height:120px;margin-bottom:2rem;}
+    .fp-ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(17,160,95,.2);animation:ringPulse 2.5s ease-in-out infinite;}
+    .fp-ring:nth-child(2){inset:-14px;border-color:rgba(17,160,95,.12);animation-delay:.5s;}
+    .fp-ring:nth-child(3){inset:-28px;border-color:rgba(17,160,95,.07);animation-delay:1s;}
+    .fp-core{position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,92,54,.5),rgba(17,160,95,.3));border-radius:50%;border:1px solid rgba(17,160,95,.3);display:flex;align-items:center;justify-content:center;font-size:2.8rem;}
+    @keyframes ringPulse{0%,100%{opacity:.6;transform:scale(1);}50%{opacity:1;transform:scale(1.05);}}
+    .bio-steps{display:flex;flex-direction:column;gap:.7rem;width:100%;max-width:520px;}
+    .bio-step{display:flex;gap:1rem;align-items:flex-start;padding:.9rem 1.1rem;border-radius:14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);}
+    .bio-step-num{width:28px;height:28px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,var(--g1),var(--g2));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;}
+    .bio-step h4{font-size:.88rem;font-weight:600;color:#fff;}
+    .bio-step p{font-size:.78rem;color:var(--muted);margin-top:.15rem;line-height:1.5;}
+    .agent-strip{display:flex;gap:1rem;align-items:center;padding:1.1rem 1.5rem;border-radius:16px;background:linear-gradient(135deg,rgba(10,92,54,.3),rgba(17,160,95,.1));border:1px solid rgba(17,160,95,.2);margin-top:1.5rem;}
+    .agent-strip-icon{font-size:1.8rem;flex-shrink:0;}
+    .agent-strip h4{font-size:.9rem;font-weight:700;color:#fff;}
+    .agent-strip p{font-size:.8rem;color:var(--muted);margin-top:.1rem;}
+    .agent-strip a{color:var(--g3);font-weight:700;}
+    .agent-strip-btn{margin-left:auto;background:var(--g1);color:#fff;border:none;border-radius:50px;padding:.55rem 1.2rem;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;text-decoration:none;transition:background .2s;}
+    .agent-strip-btn:hover{background:var(--g2);}
+    .panel-divider{height:1px;background:var(--border);margin:1.5rem 0;}
+    .panel-footer{padding:1.5rem 2.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1rem;}
+    .btn-back{background:transparent;color:var(--muted);border:1.5px solid rgba(255,255,255,.1);border-radius:50px;padding:.75rem 1.8rem;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all .2s;}
+    .btn-back:hover{border-color:rgba(255,255,255,.25);color:#fff;}
+    .btn-next{background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 100%);color:#fff;border:none;border-radius:50px;padding:.8rem 2.2rem;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all .25s;box-shadow:0 4px 20px rgba(10,92,54,.4);display:flex;align-items:center;gap:.6rem;}
+    .btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(10,92,54,.5);}
+    .btn-next svg{width:16px;height:16px;fill:#fff;}
+    .progress-label{margin-left:auto;font-size:.78rem;color:var(--muted);}
+    .success-panel{display:none;}
+    .success-panel.active{display:block;animation:panelIn .5s ease both;}
+    .success-card{border-radius:28px;overflow:hidden;border:1px solid rgba(17,160,95,.25);box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 60px rgba(10,92,54,.2);}
+    .success-header{background:linear-gradient(135deg,var(--g1) 0%,#073d24 100%);padding:3rem 2.5rem 2rem;text-align:center;position:relative;overflow:hidden;}
+    .success-header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(17,160,95,.3),transparent 70%);}
+    .success-icon-wrap{width:80px;height:80px;border-radius:50%;margin:0 auto 1.2rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:2.2rem;position:relative;z-index:1;animation:popIn .5s .2s cubic-bezier(.34,1.56,.64,1) both;}
+    @keyframes popIn{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+    .success-header h2{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;letter-spacing:-1px;position:relative;z-index:1;}
+    .success-header p{color:rgba(255,255,255,.7);font-size:.9rem;margin-top:.5rem;position:relative;z-index:1;}
+    .success-body{background:var(--card);padding:2rem 2.5rem;}
+    .success-next-steps{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+    .next-step-card{padding:1.2rem;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);text-align:center;}
+    .next-step-card .nsc-icon{font-size:1.8rem;margin-bottom:.6rem;}
+    .next-step-card h4{font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.3rem;}
+    .next-step-card p{font-size:.75rem;color:var(--muted);line-height:1.5;}
+    .success-actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;}
+    .success-btn{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:none;border-radius:50px;padding:.8rem 2rem;font-size:.9rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s;box-shadow:0 4px 20px rgba(10,92,54,.4);}
+    .success-btn:hover{transform:translateY(-2px);}
+    .success-btn-outline{background:transparent;color:var(--text);border:1.5px solid rgba(255,255,255,.15);border-radius:50px;padding:.75rem 2rem;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;}
+    .success-btn-outline:hover{border-color:rgba(255,255,255,.35);}
+    .trouble-section{margin-top:3rem;}
+    .trouble-section h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:1rem;}
+    .trouble-item{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-bottom:.6rem;overflow:hidden;cursor:pointer;transition:border-color .2s;}
+    .trouble-item:hover{border-color:rgba(17,160,95,.2);}
+    .trouble-item.open{border-color:rgba(17,160,95,.3);}
+    .trouble-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.3rem;}
+    .trouble-head h4{font-size:.88rem;font-weight:600;color:var(--text);}
+    .trouble-chev{color:var(--muted);transition:transform .25s;font-size:.85rem;}
+    .trouble-item.open .trouble-chev{transform:rotate(180deg);color:var(--g3);}
+    .trouble-body{display:none;padding:.8rem 1.3rem 1rem;font-size:.82rem;color:var(--muted);line-height:1.7;border-top:1px solid var(--border);}
+    .trouble-item.open .trouble-body{display:block;}
+    @keyframes fadeDown{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:none;}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+    ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--ink);}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+    @media(max-width:768px){.nav-links{display:none;}.panel-header,.panel-body,.panel-footer{padding:1.5rem;}.dep-grid{grid-template-columns:1fr;}.success-next-steps{grid-template-columns:1fr;}.step-track{padding:1rem;}}
+  /* ── BACK BUTTON ── */
+.back-nav {
+  position: fixed; top: 72px; left: 1.5rem; z-index: 99;
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(10,92,54,.15);
+  border: 1px solid rgba(17,160,95,.25);
+  border-radius: 50px;
+  padding: .45rem 1rem .45rem .7rem;
+  font-size: .82rem; font-weight: 600;
+  color: #a8e6c4; cursor: pointer;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  transition: all .2s;
+  font-family: inherit;
+}
+.back-nav:hover {
+  background: rgba(10,92,54,.35);
+  border-color: rgba(17,160,95,.5);
+  color: #fff;
+  transform: translateX(-2px);
+}
+.back-nav svg { width:14px; height:14px; fill:currentColor; flex-shrink:0; }
+
+/* Mobile floating */
+@media(max-width:768px){
+  .back-nav {
+    top: auto;
+    bottom: 1.5rem; left: 1.2rem;
+    background: rgba(8,15,12,.9);
+    border-color: rgba(17,160,95,.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    font-size: .85rem;
+    padding: .6rem 1.1rem .6rem .8rem;
+  }
+}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">SHA<span>uri</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="chat.html">Ask SHAuri</a></li>
+    <li><a href="hospitals.html">Hospitals</a></li>
+    <li><a href="claims.html">Claim Rejected?</a></li>
+  </ul>
+  <a href="chat.html" class="nav-cta">Get Help →</a>
+</nav>
+<a href="index.html" class="back-nav"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Home</a>
+
+<div class="page-hero">
+  <div class="hero-pill"><span class="live-dot"></span> Official SHA Registration Process</div>
+  <h1>Register with <span class="accent">SHA</span><br>Step by Step</h1>
+  <p>The official 3-step process — made simple. Follow each step and you'll be fully covered.</p>
+</div>
+
+<div class="step-track-wrapper">
+  <div class="step-track">
+    <div class="track-step active" id="ts1" onclick="jumpStep(1)">
+      <div class="track-circle" id="tc1">📋</div>
+      <div class="track-label">Registration</div>
+    </div>
+    <div class="track-step" id="ts2" onclick="jumpStep(2)">
+      <div class="track-circle" id="tc2">👨‍👩‍👧</div>
+      <div class="track-label">Dependants</div>
+    </div>
+    <div class="track-step" id="ts3" onclick="jumpStep(3)">
+      <div class="track-circle" id="tc3">👆</div>
+      <div class="track-label">Biometrics</div>
+    </div>
+    <div class="track-step" id="ts4">
+      <div class="track-circle" id="tc4">✓</div>
+      <div class="track-label">Complete!</div>
+    </div>
+  </div>
+</div>
+
+<div class="wizard-main">
+
+  <!-- STEP 1 -->
+  <div class="step-panel active" id="step1">
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-icon">📋</div>
+        <div class="panel-title-group">
+          <div class="panel-step-tag">Step 1 of 3</div>
+          <div class="panel-title">Registration</div>
+          <div class="panel-subtitle">Complete your details on the SHA portal at sha.go.ke</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="callout callout-gold"><span class="callout-icon">💡</span>Use <strong>Google Chrome</strong> or <strong>Firefox</strong>. The SHA portal has issues on Safari. Clear your browser cache if you've tried before and it failed.</div>
+
+        <div class="section-block">
+          <div class="section-block-header"><div class="section-block-icon">🪪</div><h3>Basic Information</h3></div>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:.9rem;line-height:1.6;">SHA automatically pulls your basic info from government databases using your ID number. You must also supply employment status, monthly income, and disability status. Be truthful and accurate.</p>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>National ID / Passport / Alien Card</h4><p>Go to sha.go.ke → Self Registration → enter your ID number to begin. Your basic info auto-fills.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Employment Status</h4><p>Select: Formally Employed, Self-Employed, or Unemployed / Indigent — this determines your contribution rate (2.75% of gross salary or min Ksh 500/month).</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Monthly Income</h4><p>Required for contribution calculation. Be honest — underreporting is an offence.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Disability Status (if applicable)</h4><p>Declaring a disability may qualify you for additional benefits or contribution subsidies.</p></div></div>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="section-block">
+          <div class="section-block-header"><div class="section-block-icon">📍</div><h3>Contact & Address Information</h3></div>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:.9rem;line-height:1.6;">This determines your <strong style="color:#11a05f;">Primary Care Network (PCN)</strong> — the hospitals assigned to you near your home.</p>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Primary & Alternative Phone Numbers</h4><p>An OTP verification will be sent to your primary number. Must be active and in your name.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Email Address</h4><p>Used for confirmation and account recovery. Recommended but not mandatory.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>County → Sub-County → Ward</h4><p>Use your actual home area so your PCN hospitals are close to where you live.</p></div></div>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="section-block">
+          <div class="section-block-header"><div class="section-block-icon">✅</div><h3>Confirm Details & Submit</h3></div>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Review all entries carefully</h4><p>The portal lets you review and edit before final submission. Double check your name, ID number, and phone.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Make declaration and submit</h4><p>After submission you get your <strong style="color:var(--gold);">Application Reference Number</strong> — screenshot this immediately! You need it for biometric verification.</p></div></div>
+          </div>
+        </div>
+
+        <div class="agent-strip">
+          <div class="agent-strip-icon">🌐</div>
+          <div><h4>Ready to register now?</h4><p>Open the SHA portal in a new tab and follow the steps above.</p></div>
+          <a href="https://sha.go.ke" target="_blank" class="agent-strip-btn">Open sha.go.ke →</a>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <span class="progress-label">Step 1 of 3</span>
+        <button class="btn-next" onclick="goStep(2)" style="margin-left:auto;">Next: Add Dependants <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
+      </div>
+    </div>
+
+    <div class="trouble-section">
+      <h3>⚠️ Registration Problems?</h3>
+      <div class="trouble-item" onclick="toggleTrouble(this)"><div class="trouble-head"><h4>❌ "ID not found" error on the portal</h4><span class="trouble-chev">▾</span></div><div class="trouble-body">Double-check your ID number for typos. If correct, your ID may not be in the Huduma/IPRS database yet. Call SHA: <strong>0800 720 601</strong> for manual verification, or visit the nearest SHA office with your original ID.</div></div>
+      <div class="trouble-item" onclick="toggleTrouble(this)"><div class="trouble-head"><h4>❌ OTP not arriving on my phone</h4><span class="trouble-chev">▾</span></div><div class="trouble-body">Wait 5 minutes and try again. Check your signal strength. Make sure the number entered is correct and active. If still nothing, try a different browser. Call SHA: <strong>0800 720 601</strong> for manual OTP bypass.</div></div>
+      <div class="trouble-item" onclick="toggleTrouble(this)"><div class="trouble-head"><h4>❌ Portal keeps crashing or timing out</h4><span class="trouble-chev">▾</span></div><div class="trouble-body">Try at night (8pm–11pm) when traffic is lower. Use Chrome Incognito mode and clear all cookies. If completely down, wait 24 hours — SHA maintenance windows are common on weekdays 9am–11am.</div></div>
+      <div class="trouble-item" onclick="toggleTrouble(this)"><div class="trouble-head"><h4>❌ "Already registered" but I have no card</h4><span class="trouble-chev">▾</span></div><div class="trouble-body">Someone may have registered using your ID (old NHIF records or employer). Call SHA immediately: <strong>0800 720 601</strong> and request account ownership verification with your original ID.</div></div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step-panel" id="step2">
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-icon">👨‍👩‍👧‍👦</div>
+        <div class="panel-title-group">
+          <div class="panel-step-tag">Step 2 of 3</div>
+          <div class="panel-title">Adding Dependants</div>
+          <div class="panel-subtitle">Add spouse, children and eligible relatives after self-registration</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="callout callout-green"><span class="callout-icon">ℹ️</span>A dependent receives benefits under your SHA policy. You can add dependants <strong>after</strong> completing Step 1. Select a type below to see the exact documents needed.</div>
+
+        <p style="font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:.8rem;">Who do you want to add?</p>
+        <div class="dep-grid">
+          <div class="dep-card" onclick="selectDep('spouse',this)"><div class="dep-card-icon">💍</div><h4>Spouse</h4><p>Husband or wife</p></div>
+          <div class="dep-card" onclick="selectDep('child',this)"><div class="dep-card-icon">👶</div><h4>Biological Child</h4><p>Your natural children</p></div>
+          <div class="dep-card" onclick="selectDep('adopted',this)"><div class="dep-card-icon">🤝</div><h4>Adopted Child</h4><p>Legally adopted children</p></div>
+          <div class="dep-card" onclick="selectDep('guardian',this)"><div class="dep-card-icon">⚖️</div><h4>Child (Loco Parentis)</h4><p>Child in your guardianship</p></div>
+          <div class="dep-card" onclick="selectDep('disabled',this)"><div class="dep-card-icon">♿</div><h4>Disabled Relative</h4><p>Parent or sibling with disability</p></div>
+        </div>
+
+        <div class="dep-detail" id="dep-spouse">
+          <div class="panel-divider"></div>
+          <div class="section-block-header"><div class="section-block-icon">💍</div><h3>Adding a Spouse</h3></div>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Proof of Marriage — ONE of these:</h4><p><strong>Marriage Certificate</strong>, or a <strong>Sworn Affidavit</strong>, or a <strong>Letter from your Chief</strong> confirming the marriage.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Spouse's Active Phone Number</h4><p>An OTP is sent to their phone for <strong>consent</strong>. They must approve the addition themselves.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Spouse's National ID Number</h4><p>Required to create their profile in the SHA system and link them to your account.</p></div></div>
+          </div>
+        </div>
+
+        <div class="dep-detail" id="dep-child">
+          <div class="panel-divider"></div>
+          <div class="section-block-header"><div class="section-block-icon">👶</div><h3>Adding a Biological Child</h3></div>
+          <div class="callout callout-gold"><span class="callout-icon">📅</span>Documents required depend on the child's age. Select which applies to your child:</div>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Under 18 years</h4><p>Provide <strong>Birth Certificate Number</strong> or <strong>Birth Notification Reference Number</strong>.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Age 18 and above</h4><p>Provide the child's <strong>National ID Number</strong>.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Age 21–25 in full-time education</h4><p><strong>Proof of current enrollment</strong> — school admission letter or active student ID card.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Over 25 and disabled</h4><p>Can only be added if <strong>disabled and under your care</strong>. Provide disability documentation (NCPWD card or medical certificate).</p></div></div>
+          </div>
+        </div>
+
+        <div class="dep-detail" id="dep-adopted">
+          <div class="panel-divider"></div>
+          <div class="section-block-header"><div class="section-block-icon">🤝</div><h3>Adding an Adopted Child</h3></div>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Official Adoption Documents</h4><p>Provide the necessary <strong>legal adoption documentation</strong> as evidence of the adoption.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Same age-based rules apply</h4><p>All biological child age rules (birth cert, ID, school proof, disability) apply equally to adopted children.</p></div></div>
+          </div>
+        </div>
+
+        <div class="dep-detail" id="dep-guardian">
+          <div class="panel-divider"></div>
+          <div class="section-block-header"><div class="section-block-icon">⚖️</div><h3>Child as Guardian (Loco Parentis)</h3></div>
+          <div class="callout callout-gold"><span class="callout-icon">📌</span><em>Loco parentis</em> means you are acting in the place of a parent — taking full parental responsibilities for a child who is not biologically or legally yours.</div>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Court Documents (Guardianship Order)</h4><p>Provide the court documents granting you parental responsibilities for the child.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Standard child age rules still apply</h4><p>Birth certificate / ID depending on the child's age (same as for biological children above).</p></div></div>
+          </div>
+        </div>
+
+        <div class="dep-detail" id="dep-disabled">
+          <div class="panel-divider"></div>
+          <div class="section-block-header"><div class="section-block-icon">♿</div><h3>Adding a Disabled Relative</h3></div>
+          <div class="callout callout-green"><span class="callout-icon">✅</span>You can add <strong>mother, father, brother, or sister</strong> who are disabled and under your care.</div>
+          <div class="check-list">
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Relative's National ID Number</h4><p>Required to create their profile and link them to your SHA account.</p></div></div>
+            <div class="check-item" onclick="toggleCheck(this)"><div class="chk-box"><svg class="chk-inner" width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div><div class="chk-text"><h4>Disability Documentation</h4><p>NCPWD registration card, medical certificate, or disability assessment report from a recognized institution.</p></div></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="panel-footer">
+        <button class="btn-back" onclick="goStep(1)">← Back</button>
+        <span class="progress-label">Step 2 of 3</span>
+        <button class="btn-next" onclick="goStep(3)" style="margin-left:auto;">Next: Biometrics <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-panel" id="step3">
+    <div class="panel-card">
+      <div class="panel-header">
+        <div class="panel-icon">👆</div>
+        <div class="panel-title-group">
+          <div class="panel-step-tag">Step 3 of 3 — Final Step</div>
+          <div class="panel-title">Biometrics Verification</div>
+          <div class="panel-subtitle">Visit a registered SHA agent in person to complete registration</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="callout callout-red"><span class="callout-icon">🚨</span><strong>Important:</strong> Your SHA cover is NOT active until biometric verification is complete. Don't go to hospital assuming you're covered before finishing this step.</div>
+        <div class="bio-visual">
+          <div class="fingerprint-wrap">
+            <div class="fp-ring"></div><div class="fp-ring"></div><div class="fp-ring"></div>
+            <div class="fp-core">👆</div>
+          </div>
+          <div class="bio-steps">
+            <div class="bio-step"><div class="bio-step-num">1</div><div><h4>Find a registered SHA agent near you</h4><p>Use the SHA agent locator at sha.go.ke or call <strong>0800 720 601</strong>. Agents are at most Sub-County offices and Huduma Centres.</p></div></div>
+            <div class="bio-step"><div class="bio-step-num">2</div><div><h4>Bring your original ID + Application Reference</h4><p>Carry your <strong>original National ID card</strong> and the <strong>Application Reference Number</strong> from Step 1. A photocopy is NOT accepted.</p></div></div>
+            <div class="bio-step"><div class="bio-step-num">3</div><div><h4>Complete biometric capture (fingerprints + photo)</h4><p>The agent captures your fingerprints and photograph. This is the <strong>final step</strong> in the registration process.</p></div></div>
+            <div class="bio-step"><div class="bio-step-num">4</div><div><h4>Dependants under 18 need biometrics too</h4><p>All dependants under 18 that you added in Step 2 must <strong>also attend in person</strong> for biometrics capture.</p></div></div>
+            <div class="bio-step"><div class="bio-step-num">5</div><div><h4>Make your first M-Pesa contribution</h4><p>Lipa na M-Pesa → Paybill → Business No: <strong>222222</strong> → Account: your ID number. Cover activates within 24–48 hrs.</p></div></div>
+          </div>
+        </div>
+        <div class="agent-strip">
+          <div class="agent-strip-icon">📍</div>
+          <div><h4>Find an SHA Agent Near You</h4><p>Call <a href="tel:0800720601"><strong>0800 720 601</strong></a> (free, 24/7) or check sha.go.ke for your nearest biometric verification point.</p></div>
+          <a href="https://sha.go.ke" target="_blank" class="agent-strip-btn">Find Agent →</a>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <button class="btn-back" onclick="goStep(2)">← Back</button>
+        <span class="progress-label">Step 3 of 3 — Last step!</span>
+        <button class="btn-next" onclick="goStep(4)" style="margin-left:auto;">I've Done Biometrics! 🎉 <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-panel" id="step4">
+    <div class="success-card">
+      <div class="success-header">
+        <div class="success-icon-wrap">🎉</div>
+        <h2>You're SHA Registered!</h2>
+        <p>All 3 steps complete. Your healthcare coverage is now fully active.</p>
+      </div>
+      <div class="success-body">
+        <p style="text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;">Here's what to do next to make the most of your SHA cover:</p>
+        <div class="success-next-steps">
+          <div class="next-step-card"><div class="nsc-icon">📱</div><h4>Save your Member Number</h4><p>Screenshot your SHA member number — needed at every hospital visit.</p></div>
+          <div class="next-step-card"><div class="nsc-icon">💚</div><h4>Pay first M-Pesa contribution</h4><p>Paybill 222222, Account: your ID. Cover activates within 48 hours.</p></div>
+          <div class="next-step-card"><div class="nsc-icon">🏥</div><h4>Find your nearest hospital</h4><p>Use our Hospital Finder for SHA-accredited facilities near you.</p></div>
+          <div class="next-step-card"><div class="nsc-icon">🤖</div><h4>Any problems? Ask SHAuri</h4><p>Our AI guide is here 24/7 if you face any issues.</p></div>
+        </div>
+        <div class="success-actions">
+          <a href="hospitals.html" class="success-btn">🏥 Find a Hospital</a>
+          <a href="chat.html" class="success-btn-outline">Ask SHAuri a Question</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer style="background:var(--ink2);padding:2rem 2.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;border-top:1px solid var(--border);position:relative;z-index:1;">
+  <a href="index.html" style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#fff;text-decoration:none;">SHA<span style="color:var(--gold);">uri</span></a>
+  <p style="color:var(--muted);font-size:.78rem;">Not affiliated with SHA or the Government of Kenya · Free to use · Made in Kenya 🇰🇪</p>
+</footer>
+
+<script>
+  let currentStep=1;
+  function goStep(n){
+    document.getElementById('step'+currentStep).classList.remove('active');
+    const ots=document.getElementById('ts'+currentStep);
+    if(ots){ots.classList.remove('active');ots.classList.add('done');}
+    currentStep=n;
+    const np=document.getElementById('step'+n);
+    if(np)np.classList.add('active');
+    const nts=document.getElementById('ts'+n);
+    if(nts){nts.classList.add('active');nts.classList.remove('done');}
+    if(n===4){['ts1','ts2','ts3','ts4'].forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('active');e.classList.add('done');}});}
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function jumpStep(n){if(n<=currentStep)goStep(n);}
+  function toggleCheck(el){el.classList.toggle('checked');}
+  function selectDep(type,card){
+    document.querySelectorAll('.dep-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    document.querySelectorAll('.dep-detail').forEach(d=>d.classList.remove('active'));
+    const d=document.getElementById('dep-'+type);
+    if(d)d.classList.add('active');
+  }
+  function toggleTrouble(el){el.classList.toggle('open');}
+</script>
+</body>
+</html>

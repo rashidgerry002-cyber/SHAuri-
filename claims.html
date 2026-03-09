@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SHAuri — Claim Rejected?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--green:#0a5c36;--green2:#137547;--gold:#c8972a;--gold2:#f0b429;--cream:#faf7f0;--ink:#0f1a14;--muted:#4a6358;--red:#c0392b;--shadow:0 4px 32px rgba(10,92,54,.10);}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(250,247,240,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(10,92,54,.08);}
+    .nav-logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;color:var(--green);letter-spacing:-1px;text-decoration:none;}
+    .nav-logo span{color:var(--gold);}
+    .nav-links{display:flex;gap:2rem;list-style:none;}
+    .nav-links a{text-decoration:none;font-size:.9rem;font-weight:500;color:var(--muted);}
+    .nav-links a:hover{color:var(--green);}
+    .nav-cta{background:var(--green);color:#fff;border:none;border-radius:50px;padding:.55rem 1.4rem;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;}
+
+    .page-hero{background:linear-gradient(135deg,#8b2c20,var(--red));padding:7rem 2.5rem 4rem;text-align:center;position:relative;overflow:hidden;}
+    .page-hero::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.04);}
+    .page-hero-tag{font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:1rem;}
+    .page-hero h1{font-family:'Fraunces',serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:#fff;letter-spacing:-1px;}
+    .page-hero p{color:rgba(255,255,255,.75);margin-top:.8rem;font-size:1rem;max-width:500px;margin-inline:auto;}
+
+    .claims-container{max-width:900px;margin:0 auto;padding:4rem 2rem;}
+    .section-title{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;color:var(--ink);margin-bottom:.4rem;}
+    .section-sub{color:var(--muted);font-size:.9rem;margin-bottom:2rem;}
+
+    /* Rejection Decoder */
+    .decoder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:4rem;}
+    .rejection-card{background:#fff;border-radius:20px;border:1.5px solid rgba(10,92,54,.07);padding:1.5rem;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);}
+    .rejection-card:hover{border-color:var(--green);transform:translateY(-2px);}
+    .rejection-card.selected{border-color:var(--green);background:rgba(10,92,54,.03);}
+    .rej-code{font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);background:rgba(192,57,43,.08);display:inline-block;padding:.2rem .6rem;border-radius:20px;margin-bottom:.6rem;}
+    .rej-title{font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:.3rem;}
+    .rej-short{font-size:.82rem;color:var(--muted);line-height:1.5;}
+
+    .rej-detail{background:#fff;border-radius:20px;border:2px solid var(--green);padding:2rem;margin-bottom:4rem;display:none;animation:fadeUp .3s ease;}
+    .rej-detail.active{display:block;}
+    .rej-detail-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;}
+    .rej-detail-icon{width:48px;height:48px;background:rgba(192,57,43,.1);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+    .rej-detail h3{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:900;color:var(--ink);}
+    .rej-detail p{color:var(--muted);font-size:.85rem;}
+    .action-steps{display:flex;flex-direction:column;gap:.8rem;margin:1rem 0;}
+    .action-step{display:flex;gap:1rem;align-items:flex-start;}
+    .step-num{width:28px;height:28px;background:var(--green);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;margin-top:1px;}
+    .step-text{font-size:.88rem;color:var(--ink);line-height:1.6;}
+    .step-text strong{font-weight:700;}
+
+    /* Letter Generator */
+    .letter-section{background:#fff;border-radius:24px;padding:2.5rem;box-shadow:var(--shadow);margin-bottom:2rem;}
+    .letter-form{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+    .form-group{display:flex;flex-direction:column;gap:.4rem;}
+    .form-group.full{grid-column:1/-1;}
+    .form-group label{font-size:.82rem;font-weight:600;color:var(--ink);}
+    .form-group input,.form-group select,.form-group textarea{
+      border:1.5px solid rgba(10,92,54,.12);border-radius:12px;
+      padding:.65rem .9rem;font-family:'DM Sans',sans-serif;font-size:.88rem;
+      color:var(--ink);outline:none;background:#fff;transition:border-color .2s;
+    }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);}
+    .generate-btn{background:var(--green);color:#fff;border:none;border-radius:50px;padding:.8rem 2rem;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;width:100%;}
+    .generate-btn:hover{background:var(--green2);}
+
+    .letter-output{background:var(--cream);border:1.5px solid rgba(10,92,54,.12);border-radius:16px;padding:2rem;font-size:.88rem;line-height:1.8;white-space:pre-wrap;font-family:'DM Sans',sans-serif;display:none;color:var(--ink);}
+    .letter-output.active{display:block;animation:fadeUp .3s ease;}
+    .letter-actions{display:flex;gap:.8rem;margin-top:1rem;}
+    .copy-btn{background:var(--green);color:#fff;border:none;border-radius:50px;padding:.65rem 1.5rem;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;}
+    .copy-btn:hover{background:var(--green2);}
+    .print-btn{background:transparent;color:var(--green);border:1.5px solid var(--green);border-radius:50px;padding:.6rem 1.5rem;font-size:.85rem;font-weight:600;cursor:pointer;}
+
+    /* Emergency strip */
+    .emergency-strip{background:rgba(192,57,43,.07);border:1.5px solid rgba(192,57,43,.2);border-radius:16px;padding:1.2rem 1.5rem;display:flex;gap:1rem;align-items:center;margin-bottom:3rem;}
+    .em-icon{font-size:1.5rem;flex-shrink:0;}
+    .em-text h4{font-weight:700;font-size:.95rem;color:var(--red);margin-bottom:.2rem;}
+    .em-text p{font-size:.83rem;color:var(--muted);line-height:1.5;}
+    .em-text a{color:var(--green);font-weight:700;}
+
+    /* Appeal timeline */
+    .timeline{display:flex;flex-direction:column;gap:0;margin-bottom:4rem;}
+    .timeline-item{display:flex;gap:1.5rem;padding-bottom:2rem;position:relative;}
+    .timeline-item:last-child{padding-bottom:0;}
+    .timeline-item:not(:last-child)::before{content:'';position:absolute;left:19px;top:40px;bottom:0;width:2px;background:rgba(10,92,54,.1);}
+    .tl-dot{width:40px;height:40px;border-radius:50%;border:2px solid rgba(10,92,54,.15);background:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;z-index:1;}
+    .tl-dot.active{border-color:var(--green);background:rgba(10,92,54,.08);}
+    .tl-content{padding-top:.3rem;}
+    .tl-day{font-size:.75rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;}
+    .tl-title{font-weight:700;font-size:.95rem;color:var(--ink);margin:.2rem 0;}
+    .tl-desc{font-size:.83rem;color:var(--muted);line-height:1.6;}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+    @media(max-width:768px){.nav-links{display:none;}.letter-form{grid-template-columns:1fr;}.decoder-grid{grid-template-columns:1fr;}}
+  /* ── BACK BUTTON ── */
+.back-nav {
+  position: fixed; top: 72px; left: 1.5rem; z-index: 99;
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(10,92,54,.15);
+  border: 1px solid rgba(17,160,95,.25);
+  border-radius: 50px;
+  padding: .45rem 1rem .45rem .7rem;
+  font-size: .82rem; font-weight: 600;
+  color: #a8e6c4; cursor: pointer;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  transition: all .2s;
+  font-family: inherit;
+}
+.back-nav:hover {
+  background: rgba(10,92,54,.35);
+  border-color: rgba(17,160,95,.5);
+  color: #fff;
+  transform: translateX(-2px);
+}
+.back-nav svg { width:14px; height:14px; fill:currentColor; flex-shrink:0; }
+
+/* Mobile floating */
+@media(max-width:768px){
+  .back-nav {
+    top: auto;
+    bottom: 1.5rem; left: 1.2rem;
+    background: rgba(8,15,12,.9);
+    border-color: rgba(17,160,95,.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    font-size: .85rem;
+    padding: .6rem 1.1rem .6rem .8rem;
+  }
+}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">SHA<span>uri</span></a>
+  <ul class="nav-links">
+    <li><a href="register.html">Register</a></li>
+    <li><a href="chat.html">Ask SHAuri</a></li>
+    <li><a href="hospitals.html">Hospitals</a></li>
+  </ul>
+  <a href="chat.html" class="nav-cta">Get Help →</a>
+</nav>
+<a href="index.html" class="back-nav"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Home</a>
+
+<div class="page-hero">
+  <div class="page-hero-tag">Claim Support Center</div>
+  <h1>My SHA Claim Was Rejected</h1>
+  <p>Find out exactly why, what to do, and get a ready-to-send complaint letter — in minutes.</p>
+</div>
+
+<div class="claims-container">
+
+  <div class="emergency-strip">
+    <div class="em-icon">🚨</div>
+    <div class="em-text">
+      <h4>Facing an emergency and being turned away?</h4>
+      <p>Call SHA Provider Hotline immediately: <a href="tel:0800720601"><strong>0800 720 601</strong></a> (free, 24/7). Ask for "emergency member authorization." Hospitals cannot legally deny emergency care.</p>
+    </div>
+  </div>
+
+  <!-- Rejection Decoder -->
+  <h2 class="section-title">🔍 Rejection Code Decoder</h2>
+  <p class="section-sub">Click on the rejection reason you were given to see exactly what it means and what to do.</p>
+
+  <div class="decoder-grid">
+    <div class="rejection-card" onclick="showDetail('noteligible')">
+      <div class="rej-code">ERR-01</div>
+      <div class="rej-title">Member Not Eligible</div>
+      <div class="rej-short">Your SHA account exists but is marked inactive or contributions haven't been received.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('notregistered')">
+      <div class="rej-code">ERR-02</div>
+      <div class="rej-title">Member Not Found / Not Registered</div>
+      <div class="rej-short">Your ID cannot be found in the SHA database at all.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('benefitexhausted')">
+      <div class="rej-code">ERR-03</div>
+      <div class="rej-title">Benefit Limit Exhausted</div>
+      <div class="rej-short">You or a dependant has used up the allocated benefit for this service this year.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('notcovered')">
+      <div class="rej-code">ERR-04</div>
+      <div class="rej-title">Service Not Covered</div>
+      <div class="rej-short">The specific procedure or service requested is not in SHA's benefits package.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('preauth')">
+      <div class="rej-code">ERR-05</div>
+      <div class="rej-title">Pre-Authorization Required</div>
+      <div class="rej-short">Certain procedures need SHA pre-approval before they can be performed.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('wronghospital')">
+      <div class="rej-code">ERR-06</div>
+      <div class="rej-title">Not Accredited Facility</div>
+      <div class="rej-short">The hospital you visited is not registered to accept SHA claims.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('duplicate')">
+      <div class="rej-code">ERR-07</div>
+      <div class="rej-title">Duplicate Claim</div>
+      <div class="rej-short">SHA says a claim for the same service has already been submitted.</div>
+    </div>
+    <div class="rejection-card" onclick="showDetail('delayed')">
+      <div class="rej-code">ERR-08</div>
+      <div class="rej-title">Delayed Activation</div>
+      <div class="rej-short">You registered and paid but coverage hasn't activated in the system yet.</div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="rej-detail" id="detail-noteligible">
+    <div class="rej-detail-header"><div class="rej-detail-icon">⚠️</div><div><h3>Member Not Eligible</h3><p>Your account is registered but your coverage is inactive.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Check your last M-Pesa contribution. Go to <strong>M-Pesa → Statements</strong> and confirm payment to Paybill <strong>222222</strong>.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">Log into <strong>sha.go.ke</strong> → "My Account" → Check your contribution history and account status.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">If contributions show but status is inactive, call <strong>0800 720 601</strong> and say: "My contributions are showing but my account says not eligible. Please do a manual status update."</div></div>
+      <div class="action-step"><div class="step-num">4</div><div class="step-text">If employed, check with your HR that NHIF/SHA payroll deductions have been updated. Your employer may still be paying old NHIF instead of SHA.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-notregistered">
+    <div class="rej-detail-header"><div class="rej-detail-icon">❓</div><div><h3>Member Not Found</h3><p>SHA's database doesn't recognize your ID.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Try looking yourself up at <strong>sha.go.ke</strong> using your ID number to confirm whether you're in the system.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">If not found, you'll need to register. Use our <a href="register.html" style="color:var(--green);font-weight:600;">Registration Wizard</a> to walk through the process step by step.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">If you're certain you registered, call <strong>0800 720 601</strong>. Your registration may have failed silently — a common issue. Bring your ID and registration confirmation SMS if you have it.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-benefitexhausted">
+    <div class="rej-detail-header"><div class="rej-detail-icon">🚫</div><div><h3>Benefit Limit Exhausted</h3><p>You've reached the cap for this type of service.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Log into sha.go.ke to check your <strong>remaining benefits</strong> per category (outpatient, inpatient, maternity, etc.).</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">For inpatient/surgery: request a <strong>benefit review</strong> from SHA by calling <strong>0800 720 601</strong>. Serious cases can get exceptional authorization.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">Consider SHA's <strong>enhanced benefit program</strong> — additional top-up coverage available via approved private insurers.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-notcovered">
+    <div class="rej-detail-header"><div class="rej-detail-icon">📋</div><div><h3>Service Not Covered</h3><p>This procedure isn't in SHA's Essential Benefits Package.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Ask the hospital to <strong>recode the claim</strong>. Sometimes services are billed under wrong codes. A related covered procedure code might apply.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">Request the hospital to submit a <strong>clinical justification</strong> to SHA if the service was medically necessary.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">File an appeal using our <strong>Letter Generator below</strong>, citing medical necessity and requesting exceptional coverage.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-preauth">
+    <div class="rej-detail-header"><div class="rej-detail-icon">📝</div><div><h3>Pre-Authorization Required</h3><p>SHA needs to approve this procedure in advance.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Ask your doctor to submit a <strong>pre-authorization request</strong> on your behalf through the SHA provider portal.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">Pre-auth typically takes <strong>24–72 hours</strong>. For emergencies, call <strong>0800 720 601</strong> for same-day authorization.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">Keep the pre-auth reference number. Present it at the hospital when you return for the procedure.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-wronghospital">
+    <div class="rej-detail-header"><div class="rej-detail-icon">🏥</div><div><h3>Not Accredited Facility</h3><p>SHA doesn't recognize this hospital in their system.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Use our <a href="hospitals.html" style="color:var(--green);font-weight:600;">Hospital Finder</a> to locate an accredited SHA hospital near you.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">If you believe this hospital should be accredited, ask their billing department to confirm their SHA provider number.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">If you paid out of pocket at a non-accredited hospital due to emergency, you can apply for <strong>SHA reimbursement</strong> — call <strong>0800 720 601</strong>.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-duplicate">
+    <div class="rej-detail-header"><div class="rej-detail-icon">🔄</div><div><h3>Duplicate Claim</h3><p>SHA's system shows this claim was already submitted.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Ask the hospital's billing department to pull the <strong>original claim submission record</strong> and confirm whether the first claim was actually paid.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">If the original was paid to the hospital but you still got a bill, that is a hospital billing error — escalate to hospital management.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">If neither claim was paid, request SHA to <strong>void the duplicate flag</strong> by calling <strong>0800 720 601</strong> with your claim reference numbers.</div></div>
+    </div>
+  </div>
+
+  <div class="rej-detail" id="detail-delayed">
+    <div class="rej-detail-header"><div class="rej-detail-icon">⏱️</div><div><h3>Delayed Activation</h3><p>Payment received but coverage not yet reflected in the system.</p></div></div>
+    <div class="action-steps">
+      <div class="action-step"><div class="step-num">1</div><div class="step-text">Wait <strong>24–48 hours</strong> after payment before trying again. SHA's system updates overnight in most cases.</div></div>
+      <div class="action-step"><div class="step-num">2</div><div class="step-text">For urgent care that can't wait: call <strong>0800 720 601</strong>, give your ID number and M-Pesa transaction code, and request <strong>manual activation override</strong>.</div></div>
+      <div class="action-step"><div class="step-num">3</div><div class="step-text">Keep your M-Pesa payment confirmation SMS as proof. Send it via WhatsApp to <strong>0800 720 601</strong> if available.</div></div>
+    </div>
+  </div>
+
+  <!-- Appeal Timeline -->
+  <h2 class="section-title">📅 The SHA Appeal Process</h2>
+  <p class="section-sub">If you've been wrongly rejected, here's the official escalation timeline.</p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="tl-dot active">📞</div>
+      <div class="tl-content">
+        <div class="tl-day">Day 1 — Immediately</div>
+        <div class="tl-title">Call SHA Helpline</div>
+        <div class="tl-desc">Call 0800 720 601 (free). Explain your rejection and request a claim review. Get a reference/ticket number. This is mandatory before writing any formal letter.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-dot active">✉️</div>
+      <div class="tl-content">
+        <div class="tl-day">Day 2–3 — If call fails</div>
+        <div class="tl-title">Submit a Written Complaint</div>
+        <div class="tl-desc">Use our letter generator below to create a formal complaint letter. Submit it at the nearest SHA office or email <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ceada1a3bea2afa7a0babd8ebda6afe0a9a1e0a5ab">[email&#160;protected]</a>. Keep a copy for yourself.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-dot">🏢</div>
+      <div class="tl-content">
+        <div class="tl-day">Day 7–14 — Escalation</div>
+        <div class="tl-title">SHA Must Respond Within 14 Days</div>
+        <div class="tl-desc">By law, SHA must acknowledge your complaint within 7 days and resolve it within 14 working days. If no response, escalate to the SHA Complaints & Appeals Committee.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="tl-dot">⚖️</div>
+      <div class="tl-content">
+        <div class="tl-day">Day 21+ — Final Escalation</div>
+        <div class="tl-title">Health Cabinet Secretary / Ombudsman</div>
+        <div class="tl-desc">If SHA fails to resolve: file a complaint with the Commission on Administrative Justice (Ombudsman) at ombudsman.go.ke, or contact the office of the Health CS.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Letter Generator -->
+  <h2 class="section-title">✉️ Complaint Letter Generator</h2>
+  <p class="section-sub">Fill in your details and we'll create a professional, ready-to-send SHA appeal letter.</p>
+
+  <div class="letter-section">
+    <div class="letter-form">
+      <div class="form-group">
+        <label>Your Full Name</label>
+        <input type="text" id="fullName" placeholder="e.g. Akinyi Otieno"/>
+      </div>
+      <div class="form-group">
+        <label>Your ID Number</label>
+        <input type="text" id="idNumber" placeholder="e.g. 12345678"/>
+      </div>
+      <div class="form-group">
+        <label>SHA Member Number (if known)</label>
+        <input type="text" id="memberNum" placeholder="e.g. SHA/2024/12345"/>
+      </div>
+      <div class="form-group">
+        <label>Hospital Name</label>
+        <input type="text" id="hospitalName" placeholder="e.g. Kisumu County Referral Hospital"/>
+      </div>
+      <div class="form-group">
+        <label>Date of Visit</label>
+        <input type="date" id="visitDate"/>
+      </div>
+      <div class="form-group">
+        <label>Rejection Reason Given</label>
+        <select id="rejectionReason">
+          <option value="Member Not Eligible">Member Not Eligible</option>
+          <option value="Member Not Found">Member Not Found</option>
+          <option value="Benefit Limit Exhausted">Benefit Limit Exhausted</option>
+          <option value="Service Not Covered">Service Not Covered</option>
+          <option value="Pre-Authorization Required">Pre-Authorization Required</option>
+          <option value="Not Accredited Facility">Not Accredited Facility</option>
+          <option value="Duplicate Claim">Duplicate Claim</option>
+          <option value="Delayed Activation">Delayed Activation</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Briefly describe what happened (optional)</label>
+        <textarea id="description" rows="3" placeholder="e.g. I arrived at the hospital for outpatient care. Despite showing my SHA registration confirmation SMS, I was told my cover was inactive..."></textarea>
+      </div>
+    </div>
+    <button class="generate-btn" onclick="generateLetter()">✉️ Generate My Complaint Letter</button>
+  </div>
+
+  <div class="letter-output" id="letterOutput"></div>
+  <div class="letter-actions" id="letterActions" style="display:none;">
+    <button class="copy-btn" onclick="copyLetter()">📋 Copy Letter</button>
+    <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+  </div>
+
+</div>
+
+<footer style="background:var(--ink);padding:2rem 2.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-top:2rem;">
+  <a href="index.html" style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:#fff;text-decoration:none;">SHA<span style="color:#f0b429;">uri</span></a>
+  <p style="color:rgba(255,255,255,.3);font-size:.8rem;">Not legal advice. For complex cases, contact the Commission on Administrative Justice.</p>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  function showDetail(id) {
+    document.querySelectorAll('.rej-detail').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.rejection-card').forEach(c => c.classList.remove('selected'));
+    const detail = document.getElementById('detail-' + id);
+    if(detail) {
+      detail.classList.add('active');
+      detail.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+    event.currentTarget.classList.add('selected');
+  }
+
+  function generateLetter() {
+    const name = document.getElementById('fullName').value || '[YOUR NAME]';
+    const id = document.getElementById('idNumber').value || '[YOUR ID NUMBER]';
+    const member = document.getElementById('memberNum').value || '[SHA MEMBER NUMBER IF KNOWN]';
+    const hospital = document.getElementById('hospitalName').value || '[HOSPITAL NAME]';
+    const date = document.getElementById('visitDate').value ? new Date(document.getElementById('visitDate').value).toLocaleDateString('en-KE',{year:'numeric',month:'long',day:'numeric'}) : '[DATE OF VISIT]';
+    const reason = document.getElementById('rejectionReason').value;
+    const desc = document.getElementById('description').value;
+    const today = new Date().toLocaleDateString('en-KE',{year:'numeric',month:'long',day:'numeric'});
+
+    const letter = `${name}
+ID No: ${id}
+SHA Member No: ${member}
+
+${today}
+
+The Chief Executive Officer
+Social Health Authority (SHA)
+P.O. Box 30443-00100
+Nairobi, Kenya
+
+cc: complaints@sha.go.ke
+
+Dear Sir/Madam,
+
+RE: FORMAL COMPLAINT — SHA CLAIM REJECTION / REQUEST FOR CLAIM REVIEW
+
+I write to formally register my complaint regarding the rejection of my SHA health claim, and to respectfully request an urgent review and reversal of this decision.
+
+1. BACKGROUND
+
+On ${date}, I sought medical services at ${hospital}. Upon presenting my SHA membership credentials (ID No: ${id}), my claim was rejected on the grounds of: "${reason}."
+
+${desc ? `2. ADDITIONAL DETAILS\n\n${desc}\n\n` : ''}${desc ? '3' : '2'}. GRIEVANCE
+
+I am a registered SHA member who has complied with all contribution obligations. The rejection of my claim on the stated grounds is incorrect and has caused me to incur out-of-pocket medical expenses that I should not have borne. This denial of healthcare coverage is contrary to the mandate of SHA under the Social Health Insurance Act.
+
+${desc ? '4' : '3'}. PRAYER
+
+In light of the above, I respectfully request that SHA:
+
+(a) Conduct an immediate review of my claim and account status;
+(b) Correct any system errors causing my coverage to appear inactive;
+(c) Reimburse any out-of-pocket expenses incurred due to this wrongful rejection; and
+(d) Provide written confirmation of the resolution within 7 working days as required by law.
+
+I am available to provide any additional documentation required. Please contact me on the phone number registered with my SHA account.
+
+I trust this matter will be resolved promptly.
+
+Yours faithfully,
+
+${name}
+ID No: ${id}
+SHA Member No: ${member}`;
+
+    const output = document.getElementById('letterOutput');
+    output.textContent = letter;
+    output.classList.add('active');
+    document.getElementById('letterActions').style.display = 'flex';
+    output.scrollIntoView({behavior:'smooth'});
+  }
+
+  function copyLetter() {
+    const text = document.getElementById('letterOutput').textContent;
+    navigator.clipboar

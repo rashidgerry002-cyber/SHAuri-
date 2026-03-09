@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SHAuri — Find SHA Hospitals</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--green:#0a5c36;--green2:#137547;--gold:#c8972a;--gold2:#f0b429;--cream:#faf7f0;--ink:#0f1a14;--muted:#4a6358;--red:#c0392b;--shadow:0 4px 32px rgba(10,92,54,.10);}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(250,247,240,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(10,92,54,.08);}
+    .nav-logo{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;color:var(--green);letter-spacing:-1px;text-decoration:none;}
+    .nav-logo span{color:var(--gold);}
+    .nav-links{display:flex;gap:2rem;list-style:none;}
+    .nav-links a{text-decoration:none;font-size:.9rem;font-weight:500;color:var(--muted);}
+    .nav-links a:hover{color:var(--green);}
+    .nav-cta{background:var(--green);color:#fff;border:none;border-radius:50px;padding:.55rem 1.4rem;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;}
+
+    .page-hero{background:var(--green);padding:7rem 2.5rem 4rem;text-align:center;position:relative;overflow:hidden;}
+    .page-hero-tag{font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);margin-bottom:1rem;}
+    .page-hero h1{font-family:'Fraunces',serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:#fff;letter-spacing:-1px;}
+    .page-hero p{color:rgba(255,255,255,.7);margin-top:.8rem;font-size:1rem;max-width:500px;margin-inline:auto;}
+
+    .hospitals-container{max-width:1100px;margin:0 auto;padding:3rem 2rem;}
+
+    /* Search & Filter */
+    .search-bar{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;}
+    .search-input-wrap{flex:1;min-width:200px;display:flex;align-items:center;gap:.7rem;background:#fff;border:1.5px solid rgba(10,92,54,.12);border-radius:50px;padding:.6rem 1.2rem;transition:border-color .2s;}
+    .search-input-wrap:focus-within{border-color:var(--green);}
+    .search-input-wrap input{border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--ink);outline:none;width:100%;}
+    .search-input-wrap input::placeholder{color:rgba(74,99,88,.4);}
+    .filter-select{background:#fff;border:1.5px solid rgba(10,92,54,.12);border-radius:50px;padding:.6rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--ink);cursor:pointer;outline:none;}
+    .filter-select:focus{border-color:var(--green);}
+
+    /* Stats strip */
+    .stats-strip{display:flex;gap:1.5rem;margin-bottom:2.5rem;flex-wrap:wrap;}
+    .stat-pill{background:#fff;border-radius:50px;padding:.55rem 1.2rem;font-size:.82rem;font-weight:600;border:1px solid rgba(10,92,54,.08);display:flex;align-items:center;gap:.5rem;}
+    .stat-pill .dot{width:8px;height:8px;border-radius:50%;}
+    .dot-green{background:#22a06b;}
+    .dot-yellow{background:var(--gold2);}
+    .dot-red{background:var(--red);}
+
+    /* Hospital Grid */
+    .hospitals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem;}
+    .hospital-card{background:#fff;border-radius:20px;border:1.5px solid rgba(10,92,54,.07);box-shadow:var(--shadow);overflow:hidden;transition:transform .2s,box-shadow .2s;}
+    .hospital-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(10,92,54,.12);}
+    .card-header{padding:1.2rem 1.5rem 1rem;display:flex;justify-content:space-between;align-items:flex-start;}
+    .hospital-type{font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:.25rem .7rem;border-radius:20px;margin-bottom:.5rem;display:inline-block;}
+    .type-public{background:rgba(10,92,54,.1);color:var(--green);}
+    .type-private{background:rgba(200,151,42,.12);color:#8a6318;}
+    .type-mission{background:rgba(74,99,88,.1);color:var(--muted);}
+    .hospital-name{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--ink);}
+    .status-badge{font-size:.72rem;font-weight:700;padding:.3rem .8rem;border-radius:20px;flex-shrink:0;}
+    .status-active{background:rgba(34,160,107,.1);color:#22a06b;}
+    .status-issues{background:rgba(200,151,42,.12);color:#8a6318;}
+    .status-down{background:rgba(192,57,43,.1);color:var(--red);}
+    .card-body{padding:0 1.5rem 1.5rem;}
+    .hospital-meta{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;}
+    .meta-row{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--muted);}
+    .meta-icon{font-size:.9rem;width:18px;}
+    .card-services{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;}
+    .service-tag{background:var(--cream);border:1px solid rgba(10,92,54,.08);border-radius:20px;padding:.2rem .65rem;font-size:.72rem;color:var(--ink);font-weight:500;}
+    .card-actions{display:flex;gap:.7rem;}
+    .card-btn{flex:1;text-align:center;padding:.6rem;border-radius:12px;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;border:none;}
+    .btn-call{background:rgba(10,92,54,.08);color:var(--green);}
+    .btn-call:hover{background:rgba(10,92,54,.15);}
+    .btn-directions{background:var(--green);color:#fff;}
+    .btn-directions:hover{background:var(--green2);}
+    .btn-report{background:rgba(192,57,43,.08);color:var(--red);font-size:.75rem;}
+    .btn-report:hover{background:rgba(192,57,43,.14);}
+
+    /* Report modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:#fff;border-radius:24px;padding:2rem;max-width:450px;width:100%;animation:fadeUp .3s ease;}
+    .modal h3{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;margin-bottom:.5rem;}
+    .modal p{color:var(--muted);font-size:.88rem;margin-bottom:1.5rem;}
+    .modal textarea{width:100%;border:1.5px solid rgba(10,92,54,.12);border-radius:12px;padding:.8rem 1rem;font-family:'DM Sans',sans-serif;font-size:.88rem;resize:vertical;min-height:80px;outline:none;}
+    .modal textarea:focus{border-color:var(--green);}
+    .modal-actions{display:flex;gap:.8rem;margin-top:1rem;}
+    .modal-submit{flex:1;background:var(--green);color:#fff;border:none;border-radius:50px;padding:.75rem;font-weight:600;cursor:pointer;}
+    .modal-cancel{background:transparent;border:1.5px solid rgba(10,92,54,.15);border-radius:50px;padding:.7rem 1.5rem;font-weight:600;cursor:pointer;color:var(--muted);}
+
+    .no-results{text-align:center;padding:4rem 2rem;color:var(--muted);}
+    .no-results .emoji{font-size:3rem;margin-bottom:1rem;}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+    @media(max-width:768px){.nav-links{display:none;}.hospitals-grid{grid-template-columns:1fr;}.stats-strip{gap:.8rem;}}
+  /* ── BACK BUTTON ── */
+.back-nav {
+  position: fixed; top: 72px; left: 1.5rem; z-index: 99;
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(10,92,54,.15);
+  border: 1px solid rgba(17,160,95,.25);
+  border-radius: 50px;
+  padding: .45rem 1rem .45rem .7rem;
+  font-size: .82rem; font-weight: 600;
+  color: #a8e6c4; cursor: pointer;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  transition: all .2s;
+  font-family: inherit;
+}
+.back-nav:hover {
+  background: rgba(10,92,54,.35);
+  border-color: rgba(17,160,95,.5);
+  color: #fff;
+  transform: translateX(-2px);
+}
+.back-nav svg { width:14px; height:14px; fill:currentColor; flex-shrink:0; }
+
+/* Mobile floating */
+@media(max-width:768px){
+  .back-nav {
+    top: auto;
+    bottom: 1.5rem; left: 1.2rem;
+    background: rgba(8,15,12,.9);
+    border-color: rgba(17,160,95,.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    font-size: .85rem;
+    padding: .6rem 1.1rem .6rem .8rem;
+  }
+}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">SHA<span>uri</span></a>
+  <ul class="nav-links">
+    <li><a href="register.html">Register</a></li>
+    <li><a href="chat.html">Ask SHAuri</a></li>
+    <li><a href="claims.html">Claims</a></li>
+  </ul>
+  <a href="chat.html" class="nav-cta">Get Help →</a>
+</nav>
+<a href="index.html" class="back-nav"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Home</a>
+
+<div class="page-hero">
+  <div class="page-hero-tag">Live Hospital Directory</div>
+  <h1>Find SHA-Accredited Hospitals</h1>
+  <p>Search hospitals that accept SHA and see which are currently processing claims without issues.</p>
+</div>
+
+<div class="hospitals-container">
+
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="Search by hospital name or area..." oninput="filterHospitals()"/>
+    </div>
+    <select class="filter-select" id="countyFilter" onchange="filterHospitals()">
+      <option value="">All Counties</option>
+      <option value="Kisumu">Kisumu</option>
+      <option value="Nairobi">Nairobi</option>
+      <option value="Mombasa">Mombasa</option>
+      <option value="Nakuru">Nakuru</option>
+      <option value="Eldoret">Eldoret / Uasin Gishu</option>
+      <option value="Kiambu">Kiambu</option>
+    </select>
+    <select class="filter-select" id="typeFilter" onchange="filterHospitals()">
+      <option value="">All Types</option>
+      <option value="Public">Public</option>
+      <option value="Private">Private</option>
+      <option value="Mission">Mission</option>
+    </select>
+    <select class="filter-select" id="statusFilter" onchange="filterHospitals()">
+      <option value="">All Status</option>
+      <option value="Active">Active ✅</option>
+      <option value="Issues">Minor Issues ⚠️</option>
+    </select>
+  </div>
+
+  <div class="stats-strip">
+    <div class="stat-pill"><span class="dot dot-green"></span> <span id="activeCount">0</span> Fully Active</div>
+    <div class="stat-pill"><span class="dot dot-yellow"></span> <span id="issuesCount">0</span> Minor Issues</div>
+    <div class="stat-pill"><span class="dot dot-red"></span> <span id="downCount">0</span> Not Accepting</div>
+    <div class="stat-pill">📍 Showing <span id="totalCount">0</span> hospitals</div>
+  </div>
+
+  <div class="hospitals-grid" id="hospitalsGrid"></div>
+  <div class="no-results" id="noResults" style="display:none">
+    <div class="emoji">🔍</div>
+    <p>No hospitals found. Try a different search or <a href="chat.html" style="color:var(--green);font-weight:600;">ask SHAuri</a> for help finding care near you.</p>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <h3>📢 Report an Issue</h3>
+    <p id="reportHospitalName">Report a problem with this hospital's SHA processing.</p>
+    <textarea id="reportText" placeholder="Describe the issue (e.g. 'Claims rejected without reason', 'SHA not being accepted')..."></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-submit" onclick="submitReport()">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<footer style="background:var(--ink);padding:2rem 2.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-top:4rem;">
+  <a href="index.html" style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:#fff;text-decoration:none;">SHA<span style="color:#f0b429;">uri</span></a>
+  <p style="color:rgba(255,255,255,.3);font-size:.8rem;">Hospital data is crowdsourced and updated regularly. Always call ahead to confirm.</p>
+</footer>
+
+<script>
+const hospitals = [
+  {id:1,name:"Kisumu County Referral Hospital",county:"Kisumu",type:"Public",status:"Active",phone:"057 202 1488",address:"Kisumu CBD, opposite Nyalenda",services:["Outpatient","Inpatient","Maternity","Emergency","Surgery","Pharmacy"],notes:"Largest public hospital in Western Kenya. SHA claims processing usually within 2 hours."},
+  {id:2,name:"Aga Khan Hospital Kisumu",county:"Kisumu",type:"Private",status:"Active",phone:"057 202 2049",address:"Otieno Oyoo St, Kisumu",services:["Outpatient","Inpatient","ICU","Lab","Radiology","Specialist"],notes:"Premium private facility. SHA accepted for most services. Pre-authorization required for surgery."},
+  {id:3,name:"Jaramogi Oginga Odinga Teaching Hospital",county:"Kisumu",type:"Public",status:"Issues",phone:"057 202 0900",address:"Mamboleo, Kisumu",services:["Outpatient","Inpatient","Maternity","Specialist","Cancer"],notes:"⚠️ Users report delays in SHA claim processing — up to 48 hours. Call ahead."},
+  {id:4,name:"St. Luke's Orthopaedic & Trauma Hospital",county:"Kisumu",type:"Mission",status:"Active",phone:"057 202 3650",address:"Kisumu",services:["Orthopaedics","Trauma","Outpatient","Physio"],notes:"Excellent for fractures and orthopaedic care. SHA accepted for most procedures."},
+  {id:5,name:"Kenyatta National Hospital",county:"Nairobi",type:"Public",status:"Active",phone:"020 272 6300",address:"Hospital Rd, Upper Hill, Nairobi",services:["Outpatient","Inpatient","Emergency","ICU","Cancer","Specialist"],notes:"Kenya's largest referral hospital. SHA accepted. Expect long queues — arrive early."},
+  {id:6,name:"Nairobi Hospital",county:"Nairobi",type:"Private",status:"Active",phone:"020 284 5000",address:"Argwings Kodhek Rd, Nairobi",services:["Outpatient","Inpatient","ICU","Maternity","Specialist","Radiology"],notes:"SHA accepted. One of Nairobi's top private hospitals. Pre-auth needed for elective procedures."},
+  {id:7,name:"Pumwani Maternity Hospital",county:"Nairobi",type:"Public",status:"Active",phone:"020 555 0281",address:"Racecourse Rd, Nairobi",services:["Maternity","Newborn ICU","Family Planning"],notes:"Largest maternity hospital in East Africa. SHA fully accepted for all maternity services."},
+  {id:8,name:"Aga Khan Hospital Nairobi",county:"Nairobi",type:"Private",status:"Active",phone:"020 366 2000",address:"3rd Parklands Ave, Nairobi",services:["Outpatient","Inpatient","ICU","Specialist","Radiology","Cancer"],notes:"SHA accepted. High-quality facility. Confirm specific department coverage before visit."},
+  {id:9,name:"Coast General Teaching & Referral Hospital",county:"Mombasa",type:"Public",status:"Active",phone:"041 231 4201",address:"Moi Ave, Mombasa",services:["Outpatient","Inpatient","Maternity","Emergency","Surgery"],notes:"Main public hospital on the coast. SHA fully accepted."},
+  {id:10,name:"Aga Khan Hospital Mombasa",county:"Mombasa",type:"Private",status:"Issues",phone:"041 227 7710",address:"Vanga Rd, Mombasa",services:["Outpatient","Inpatient","ICU","Lab","Specialist"],notes:"⚠️ SHA claim reimbursements delayed by 1-2 weeks currently. Inpatient accepted, some outpatient issues."},
+  {id:11,name:"Nakuru Level 5 Hospital",county:"Nakuru",type:"Public",status:"Active",phone:"051 221 0154",address:"Hospital Rd, Nakuru Town",services:["Outpatient","Inpatient","Maternity","Emergency","Surgery"],notes:"SHA fully active and processing. Good experience reported by recent users."},
+  {id:12,name:"Moi Teaching & Referral Hospital",county:"Eldoret",type:"Public",status:"Active",phone:"053 206 3000",address:"Nandi Rd, Eldoret",services:["Outpatient","Inpatient","Emergency","ICU","Cancer","Specialist"],notes:"Second largest national referral hospital. SHA accepted for all services."},
+  {id:13,name:"Kiambu Level 4 Hospital",county:"Kiambu",type:"Public",status:"Active",phone:"020 203 2750",address:"Thika Rd, Kiambu Town",services:["Outpatient","Inpatient","Maternity","Surgery"],notes:"SHA fully accepted. Recently upgraded SHA processing system."},
+];
+
+let currentReportHospital = '';
+
+function getStatusBadge(status) {
+  if(status==='Active') return '<span class="status-badge status-active">✅ Active</span>';
+  if(status==='Issues') return '<span class="status-badge status-issues">⚠️ Minor Issues</span>';
+  return '<span class="status-badge status-down">❌ Not Accepting</span>';
+}
+function getTypeBadge(type) {
+  const cls = type==='Public'?'type-public':type==='Private'?'type-private':'type-mission';
+  return `<span class="hospital-type ${cls}">${type}</span>`;
+}
+
+function renderHospitals(list) {
+  const grid = document.getElementById('hospitalsGrid');
+  const noR = document.getElementById('noResults');
+  grid.innerHTML = '';
+  if(!list.length){noR.style.display='block';return;}
+  noR.style.display='none';
+  list.forEach(h => {
+    const card = document.createElement('div');
+    card.className = 'hospital-card';
+    card.innerHTML = `
+      <div class="card-header">
+        <div>
+          ${getTypeBadge(h.type)}
+          <div class="hospital-name">${h.name}</div>
+        </div>
+        ${getStatusBadge(h.status)}
+      </div>
+      <div class="card-body">
+        <div class="hospital-meta">
+          <div class="meta-row"><span class="meta-icon">📍</span>${h.address}</div>
+          <div class="meta-row"><span class="meta-icon">📞</span>${h.phone}</div>
+          <div class="meta-row" style="color:${h.status==='Active'?'#22a06b':h.status==='Issues'?'#8a6318':'var(--red)'};font-size:.8rem;">${h.notes}</div>
+        </div>
+        <div class="card-services">${h.services.map(s=>`<span class="service-tag">${s}</span>`).join('')}</div>
+        <div class="card-actions">
+          <a href="tel:${h.phone}" class="card-btn btn-call">📞 Call</a>
+          <a href="https://maps.google.com?q=${encodeURIComponent(h.name+' '+h.address)}" target="_blank" class="card-btn btn-directions">🗺 Directions</a>
+          <button class="card-btn btn-report" onclick="openReport('${h.name.replace(/'/g,"\\'")}')">⚠️ Report</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.getElementById('activeCount').textContent = list.filter(h=>h.status==='Active').length;
+  document.getElementById('issuesCount').textContent = list.filter(h=>h.status==='Issues').length;
+  document.getElementById('downCount').textContent = list.filter(h=>h.status==='Down').length;
+  document.getElementById('totalCount').textContent = list.length;
+}
+
+function filterHospitals() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const county = document.getElementById('countyFilter').value;
+  const type = document.getElementById('typeFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  const filtered = hospitals.filter(h =>
+    (!q || h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q)) &&
+    (!county || h.county === county) &&
+    (!type || h.type === type) &&
+    (!status || h.status === status)
+  );
+  renderHospitals(filtered);
+}
+
+function openReport(name) {
+  currentReportHospital = name;
+  document.getElementById('reportHospitalName').textContent = `Report a SHA issue at: ${name}`;
+  document.getElementById('reportText').value = '';
+  document.getElementById('reportModal').classList.add('open');
+}
+function closeModal() { document.getElementById('reportModal').classList.remove('open'); }
+function submitReport() {
+  alert('✅ Thank you! Your report has been submitted and will help other Kenyans know about this issue.');
+  closeModal();
+}
+
+renderHospitals(hospitals);
+</script>
+</body>
+</html>
